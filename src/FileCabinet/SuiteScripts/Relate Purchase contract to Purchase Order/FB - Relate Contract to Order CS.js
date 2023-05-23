@@ -9,7 +9,7 @@
  * @copyright Tekiio México 2023
  * 
  * Client              -> Healix
- * Last modification   -> 22/05/2023
+ * Last modification   -> 23/05/2023
  * Modified by         -> Dylan Mendoza <dylan.mendoza@freebug.mx>
  * Script in NS        -> FB - Relate Contract to Order CS <customscript_fb_relate_contract_order_cs>
  */
@@ -26,6 +26,7 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
     var currIndex = '';
     var validated = false;
     var glbItem = '';
+    var resetValid = false;
     /**
      * Function to be executed after page is initialized.
      *
@@ -54,7 +55,33 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
      * @since 2015.2
      */
     function fieldChanged(scriptContext) {
-        
+        try {
+            var fieldChanged = scriptContext.fieldId;
+            if (fieldChanged == 'shipaddresslist') {
+                resetValid = true;
+                var currentRecord = scriptContext.currentRecord;
+                var numLines = currentRecord.getLineCount({
+                    sublistId: 'item'
+                });
+                for (var line = 0; line < numLines; line++) {
+                    var record = currentRecord.selectLine({
+                        sublistId: 'item',
+                        line: line
+                    });
+                    currentRecord.setCurrentSublistValue({
+                        sublistId: 'item',
+                        fieldId: 'custcol_fb_contract_related_by',
+                        value: 1
+                    });
+                    currentRecord.commitLine({
+                        sublistId: 'item'
+                    });
+                }
+                resetValid = false;
+            }
+        } catch (error) {
+            log.error({title:'validateField', details:error});
+        }
     }
 
     /**
@@ -111,7 +138,7 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
      * @since 2015.2
      */
     function validateField(scriptContext) {
-
+        
     }
 
     /**
@@ -127,8 +154,8 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
      */
     function validateLine(scriptContext) {
         try {
-            log.debug({title:'validated', details:validated});
-            if (validated == true) {
+            log.debug({title:'firstValidation', details:{validated: validated, resetValid: resetValid}});
+            if (validated == true || resetValid == true) {
                 validated = false;
                 return true;
             }
@@ -221,6 +248,11 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
                             value: contractId,
                             ignoreFieldChange: true
                         });
+                        currentRecord.setCurrentSublistValue({
+                            sublistId: 'item',
+                            fieldId: 'custcol_fb_contract_related_by',
+                            value: 2
+                        });
                         var quantityUnit = currentRecord.getCurrentSublistValue({
                             sublistId: 'item',
                             fieldId: 'unitconversionrate'
@@ -245,7 +277,7 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
                                 ignoreFieldChange: false
                             });
                         }
-                        log.debug('Remaining governance units: ' + scriptObj.getRemainingUsage());
+                        log.debug('Fin un solo contrato', 'Governance: ' + scriptObj.getRemainingUsage());
                         return true;
                     }
                 }else if(myPagedData.count > 1){
@@ -283,6 +315,7 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
                     if(selectcontrato){
                         selectcontrato.addEventListener('change', atrapar);
                     }
+                    log.debug('Fin varios contratos', 'Governance: ' + scriptObj.getRemainingUsage());
                     return true;
                 }else{
                     let options = {
@@ -299,7 +332,12 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
                         fieldId: 'purchasecontract',
                         value: ''
                     });
-                    log.debug('Remaining governance units: ' + scriptObj.getRemainingUsage());
+                    currentRecord.setCurrentSublistValue({
+                        sublistId: 'item',
+                        fieldId: 'custcol_fb_contract_related_by',
+                        value: 5
+                    });
+                    log.debug('Fin sin contratos', 'Governance: ' + scriptObj.getRemainingUsage());
                     return true;
                 }
             }else{
@@ -308,9 +346,15 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
                     fieldId: 'purchasecontract',
                     value: ''
                 });
-                log.debug('Remaining governance units: ' + scriptObj.getRemainingUsage());
+                currentRecord.setCurrentSublistValue({
+                    sublistId: 'item',
+                    fieldId: 'custcol_fb_contract_related_by',
+                    value: 4
+                });
+                log.debug('Fin sin location', 'Governance: ' + scriptObj.getRemainingUsage());
                 return true;
             }
+
         } catch (error) {
             log.error({title:'validateLine', details:error});
         }
@@ -356,214 +400,6 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
      * @since 2015.2
      */
     function saveRecord(scriptContext) {
-        try {
-            var currentRecord = scriptContext.currentRecord;
-            var vendor = currentRecord.getValue({fieldId: 'entity'});
-            var locatioShipTo = currentRecord.getValue({fieldId: 'shipaddresslist'});
-            console.log('firsInfo', {vendor: vendor, locatioShipTo: locatioShipTo} );
-            log.debug({title:'firstInformation', details:{vendor: vendor, locatioShipTo: locatioShipTo}});
-            if (locatioShipTo) {
-                var purchasecontractSearchObj = search.create({
-                    type: search.Type.PURCHASE_CONTRACT,
-                    filters:
-                    [
-                       ["custbody_tkio_hl_ship_to_con","anyof",locatioShipTo], 
-                       "AND", 
-                       ["vendor.internalid","anyof",vendor], 
-                       "AND", 
-                       ["mainline","is","F"]
-                    ],
-                    columns:
-                    [
-                       search.createColumn({
-                          name: "internalid",
-                          sort: search.Sort.ASC,
-                          label: "ID interno"
-                       }),
-                       search.createColumn({name: "custbody_tkio_hl_ship_to_con", label: "Ship To Contract"}),
-                       search.createColumn({
-                          name: "entityid",
-                          join: "vendor",
-                          label: "Nombre"
-                       }),
-                       search.createColumn({
-                          name: "internalid",
-                          join: "vendor",
-                          label: "ID interno"
-                       }),
-                       search.createColumn({name: "trandate", label: "Fecha"}),
-                       search.createColumn({name: "unitid", label: "Unit Id"}),
-                       search.createColumn({name: "tranid", label: "Número de documento"}),
-                       search.createColumn({name: "rate", label: "Item rate 1"}),
-                       search.createColumn({
-                        name: "internalid",
-                        join: "item",
-                        label: "Internal ID"
-                     })
-                    ]
-                });
-                var myPagedData = purchasecontractSearchObj.runPaged({
-                    pageSize: 1000
-                });
-                log.debug({title:'results', details:myPagedData.count});
-                console.log('results', myPagedData.count);
-                if (myPagedData.count == 1) {
-                    var contractId, shipTo, itemId, itemUnitId, itemRate;
-                    var itemData = [];
-                    var itemDataAux = [];
-                    myPagedData.pageRanges.forEach(function(pageRange){
-                        var myPage = myPagedData.fetch({index: pageRange.index});
-                        myPage.data.forEach(function(result){
-                            contractId = result.getValue({name: 'internalid'});
-                            shipTo = result.getValue({name: 'custbody_tkio_hl_ship_to_con'});
-                            itemId = result.getValue({
-                                name: "internalid",
-                                join: "item",
-                                label: "Internal ID"
-                            });
-                            itemUnitId = result.getValue({name: 'unitid'});
-                            itemRate = result.getValue({name: 'rate'});
-                            itemData.push({item_id: itemId, item_unit_id : itemUnitId, item_rate: itemRate});
-                            itemDataAux.push(itemId);
-                        });
-                    });
-                    log.debug({title:'Datos found', details:{contractId: contractId, shipTo: shipTo}});
-                    console.log('Data found', {contractId: contractId, shipTo: shipTo});
-                    log.debug({title:'itemData', details:itemData});
-                    console.log('itemData ', itemData);
-                    if (shipTo && contractId) {
-                        var numLines = currentRecord.getLineCount({
-                            sublistId: 'item'
-                        });
-                        log.debug({title:'numOfLines', details:numLines});
-                        for (var line = 0; line < numLines; line++) {
-                            var lineNum = currentRecord.selectLine({
-                                sublistId: 'item',
-                                line: line
-                            });
-                            currentRecord.setCurrentSublistValue({
-                                sublistId: 'item',
-                                fieldId: 'purchasecontract',
-                                value: contractId,
-                                ignoreFieldChange: true
-                            });
-                            var quantityUnit = currentRecord.getCurrentSublistValue({
-                                sublistId: 'item',
-                                fieldId: 'unitconversionrate'
-                            });
-                            var quantityitem = currentRecord.getCurrentSublistValue({
-                                sublistId: 'item',
-                                fieldId: 'quantity'
-                            });
-                            var item = currentRecord.getCurrentSublistValue({
-                                sublistId: 'item',
-                                fieldId: 'item'
-                            });
-                            log.debug({title:'Datos', details:{item: item, quantityUnit: quantityUnit, quantityitem: quantityitem}});
-                            var lineAux = itemDataAux.indexOf(item);
-                            if (lineAux!= -1) {
-                                var newRateItem = quantityUnit*quantityitem*itemData[lineAux].item_rate;
-                                log.debug({title:'newRateItem', details:newRateItem});
-                                currentRecord.setCurrentSublistValue({
-                                    sublistId: 'item',
-                                    fieldId: 'rate',
-                                    value: newRateItem,
-                                    ignoreFieldChange: false
-                                });
-                            }
-                            currentRecord.commitLine({
-                                sublistId: 'item'
-                            });
-                        }
-                        return true;
-                    }
-                }else if(myPagedData.count > 1){
-                    return true;
-                    // var contractId, contractName;
-                    // var hmtlInsert = '<label for="select_contract">Please select one of the following contracts for the purchase order:</label><br><br>';
-                    // hmtlInsert = hmtlInsert + '<select name="contract" id="select_contract" >';
-                    // hmtlInsert = hmtlInsert + '<option value="">Selecciona una opción</option>';
-                    // myPagedData.pageRanges.forEach(function(pageRange){
-                    //     var myPage = myPagedData.fetch({index: pageRange.index});
-                    //     myPage.data.forEach(function(result){
-                    //         contractId = result.getValue({name: 'internalid'});
-                    //         contractName = result.getValue({name: 'tranid'});
-                    //         hmtlInsert = hmtlInsert + '<option value="'+contractId+'">' + contractName + '</option>';
-                    //     });
-                    // });
-                    // hmtlInsert = hmtlInsert + '</select>';
-                    // hmtlInsert += '<script>document.getElementById("select_contract").addEventListener("change", dialogResponse); function dialogResponse(e) {console.log(e.target.value)}</script>';
-                    // let options = {
-                    //     title: 'Select a contract',
-                    //     message: hmtlInsert
-                    // };
-                    // var dialogselect = dialog.confirm(options).then(success).catch(failure);
-
-                    // console.log(document.getElementById("select_contract"));
-
-                    // var selectcontrato = document.getElementById("select_contract");
-
-                    // if(selectcontrato){
-                    //     selectcontrato.addEventListener('change', atrapar);
-                    // }
-                    // console.log('selectContrato', selectcontrato);
-                    // console.log('contarto ', contrato);
-                }else{
-                    let options = {
-                        title: 'Warning',
-                        message: 'There are no contracts for the selected vendor and location.'
-                    };
-                    var resultSelect = dialog.alert(options).then(function (value) {
-                        log.debug({title:'value', details:value});
-                    }).catch(failure);
-                    console.log('No hay info, con ese vendedor y shipto');
-                    log.debug({title:'No hay info', details:'No hay datos con ese vendedor y shipTo'});
-                    var numLines = currentRecord.getLineCount({
-                        sublistId: 'item'
-                    });
-                    log.debug({title:'numOfLines', details:numLines});
-                    for (var line = 0; line < numLines; line++) {
-                        var lineNum = currentRecord.selectLine({
-                            sublistId: 'item',
-                            line: line
-                        });
-                        currentRecord.setCurrentSublistValue({
-                            sublistId: 'item',
-                            fieldId: 'purchasecontract',
-                            value: '',
-                            ignoreFieldChange: true
-                        });
-                        currentRecord.commitLine({
-                            sublistId: 'item'
-                        });
-                    }
-                    return true;
-                }
-            }else{
-                var numLines = currentRecord.getLineCount({
-                    sublistId: 'item'
-                });
-                log.debug({title:'numOfLines', details:numLines});
-                for (var line = 0; line < numLines; line++) {
-                    var lineNum = currentRecord.selectLine({
-                        sublistId: 'item',
-                        line: line
-                    });
-                    currentRecord.setCurrentSublistValue({
-                        sublistId: 'item',
-                        fieldId: 'purchasecontract',
-                        value: '',
-                        ignoreFieldChange: true
-                    });
-                    currentRecord.commitLine({
-                        sublistId: 'item'
-                    });
-                }
-                return true;
-            }
-        } catch (saveRecordError) {
-            log.error({title:'saveRecord', details:saveRecordError});
-        }
     }    
 
     function atrapar(){
@@ -625,8 +461,6 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
             });
             log.debug({title:'results', details:myPagedData.count});
             console.log('results', myPagedData.count);
-
-
             var contractId, shipTo, itemId, itemUnitId, itemRate;
             var itemData = [];
             var itemDataAux = [];
@@ -650,9 +484,6 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
             console.log('Data found', {contractId: contractId, shipTo: shipTo});
             log.debug({title:'itemData', details:itemData});
             console.log('itemData ', itemData);
-
-
-
             var record = myRecord.selectLine({
                 sublistId: 'item',
                 line: currIndex
@@ -661,6 +492,11 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
                 sublistId: 'item',
                 fieldId: 'purchasecontract',
                 value: contrato
+            });
+            myRecord.setCurrentSublistValue({
+                sublistId: 'item',
+                fieldId: 'custcol_fb_contract_related_by',
+                value: 2
             });
             var quantityUnit = myRecord.getCurrentSublistValue({
                 sublistId: 'item',
@@ -685,19 +521,13 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
                     value: newRateItem,
                     ignoreFieldChange: false
                 });
+                validated = true;
             }
-            // myRecord.setCurrentSublistValue({
-            //     sublistId: 'item',
-            //     fieldId: 'rate',
-            //     value: 0
-            // });
             myRecord.commitLine({
                 sublistId: 'item'
             });
-            // myRecord.selectNewLine({
-            //     sublistId: 'item'
-            // });
             validated = true;
+            log.debug({title:'finValidated', details:validated});
         }else{
             validated = false;
         }
@@ -709,7 +539,7 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
 
     return {
         pageInit: pageInit,
-        // fieldChanged: fieldChanged,
+        fieldChanged: fieldChanged,
         // postSourcing: postSourcing,
         // sublistChanged: sublistChanged,
         // lineInit: lineInit,

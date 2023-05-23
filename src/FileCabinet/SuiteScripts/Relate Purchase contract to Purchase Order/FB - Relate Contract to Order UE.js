@@ -8,7 +8,7 @@
  * @copyright Tekiio México 2023
  * 
  * Client              -> Healix
- * Last modification   -> 19/05/2023
+ * Last modification   -> 23/05/2023
  * Modified by         -> Dylan Mendoza <dylan.mendoza@freebug.mx>
  * Script in NS        -> FB - Relate Contract to Order UE <customscript_fb_relate_contract_order_ue>
  */
@@ -45,6 +45,9 @@ define(['N/log', 'N/search'],
             var locatioShipTo = newRecord.getValue({fieldId: 'shipaddresslist'});
             log.debug({title:'firstInformation', details:{vendor: vendor, locatioShipTo: locatioShipTo}});
             if (locatioShipTo) {
+                var numLines = newRecord.getLineCount({
+                    sublistId: 'item'
+                });
                 var purchasecontractSearchObj = search.create({
                     type: search.Type.PURCHASE_CONTRACT,
                     filters:
@@ -79,7 +82,7 @@ define(['N/log', 'N/search'],
                 var myPagedData = purchasecontractSearchObj.runPaged({
                     pageSize: 1000
                 });
-                // log.debug({title:'results', details:myPagedData.count});
+                log.debug({title:'results', details:myPagedData.count});
                 if (myPagedData.count == 1) {
                     var contractId, shipTo;
                     myPagedData.pageRanges.forEach(function(pageRange){

@@ -1,0 +1,28 @@
+<customlist scriptid="customlist_fb_origin_contract_related">
+  <description>Values to be used for the development of the relationship of contracts with purchase orders.</description>
+  <isinactive>F</isinactive>
+  <isordered>T</isordered>
+  <name>Origin of the contract related</name>
+  <customvalues>
+    <customvalue scriptid="val_314880_7076975_sb1_868">
+      <isinactive>F</isinactive>
+      <value>Pending</value>
+    </customvalue>
+    <customvalue scriptid="val_314881_7076975_sb1_267">
+      <isinactive>F</isinactive>
+      <value>User</value>
+    </customvalue>
+    <customvalue scriptid="val_314882_7076975_sb1_711">
+      <isinactive>F</isinactive>
+      <value>Process</value>
+    </customvalue>
+    <customvalue scriptid="val_314893_7076975_sb1_419">
+      <isinactive>F</isinactive>
+      <value>No location</value>
+    </customvalue>
+    <customvalue scriptid="val_314894_7076975_sb1_893">
+      <isinactive>F</isinactive>
+      <value>No contracts</value>
+    </customvalue>
+  </customvalues>
+</customlist>
