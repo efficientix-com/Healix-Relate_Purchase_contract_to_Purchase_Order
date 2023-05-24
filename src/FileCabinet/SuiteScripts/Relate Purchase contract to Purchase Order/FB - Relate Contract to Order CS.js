@@ -73,6 +73,11 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
                         fieldId: 'custcol_fb_contract_related_by',
                         value: 1
                     });
+                    currentRecord.setCurrentSublistValue({
+                        sublistId: 'item',
+                        fieldId: 'purchasecontract',
+                        value: ''
+                    });
                     currentRecord.commitLine({
                         sublistId: 'item'
                     });
@@ -170,7 +175,7 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
             glbItem = itemValue;
             console.log('firsInfo', {vendor: vendor, locatioShipTo: locatioShipTo} );
             log.debug({title:'firstInformation', details:{vendor: vendor, locatioShipTo: locatioShipTo, itemValue: itemValue}});
-            if (locatioShipTo) {
+            if (locatioShipTo && itemValue) {
                 var purchasecontractSearchObj = search.create({
                     type: search.Type.PURCHASE_CONTRACT,
                     filters:
