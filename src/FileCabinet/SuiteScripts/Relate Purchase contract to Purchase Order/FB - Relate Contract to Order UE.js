@@ -183,8 +183,9 @@ define(['N/log', 'N/search', 'N/runtime'],
                                         value: contract
                                     });
                                     var unidadesPO = linesTrans[lineToSet].unidad;
-                                    var cantidadPO = linesTrans[lineToSet].cantidad;
-                                    var newRateItem = unidadesPO*cantidadPO*rate;
+                                    // var cantidadPO = linesTrans[lineToSet].cantidad;
+                                    // var newRateItem = unidadesPO*cantidadPO*rate;
+                                    var newRateItem = unidadesPO*rate;
                                     // log.debug({title:'newRateItem', details:newRateItem});
                                     newRecord.setSublistValue({
                                         sublistId: 'item',
