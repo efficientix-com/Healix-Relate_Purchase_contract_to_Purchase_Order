@@ -273,7 +273,7 @@ function(log, record, search, dialog, message, currentRecord, runtime) {
                         log.debug({title:'Datos', details:{item: item, quantityUnit: quantityUnit, quantityitem: quantityitem}});
                         var lineAux = itemDataAux.indexOf(item);
                         if (lineAux!= -1) {
-                            var newRateItem = quantityUnit*quantityitem*itemData[lineAux].item_rate;
+                            var newRateItem = quantityUnit*itemData[lineAux].item_rate;
                             log.debug({title:'newRateItem', details:newRateItem});
                             currentRecord.setCurrentSublistValue({
                                 sublistId: 'item',
