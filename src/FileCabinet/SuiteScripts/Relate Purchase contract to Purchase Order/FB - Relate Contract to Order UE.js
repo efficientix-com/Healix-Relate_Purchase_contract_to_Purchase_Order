@@ -28,7 +28,7 @@ define(['N/log', 'N/search', 'N/runtime'],
          * @since 2015.2
          */
         const beforeLoad = (scriptContext) => {
-
+            log.debug({ title:'Beforload Event', details:scriptContext });
         }
 
         /**
@@ -41,7 +41,12 @@ define(['N/log', 'N/search', 'N/runtime'],
          */
         const beforeSubmit = (scriptContext) => {
             try {
+                log.debug({ title:'scriptContext eventType', details:scriptContext.type });
                 var newRecord = scriptContext.newRecord;
+                var oldRecord = scriptContext.oldRecord;
+                let statusOld = oldRecord.getValue({fieldId: 'approvalstatus'});
+                let statusNew = newRecord.getValue({fieldId: 'approvalstatus'});
+                log.debug({ title:'status', details:{old: statusOld, new: statusNew} });
                 var scriptObj = runtime.getCurrentScript();
                 var vendor  = newRecord.getValue({fieldId: 'entity'});
                 var locatioShipTo = newRecord.getValue({fieldId: 'shipaddresslist'});
@@ -81,7 +86,7 @@ define(['N/log', 'N/search', 'N/runtime'],
                             line: line
                         });
                         log.debug({title:'validacion', details:estadoLine});
-                        if (estadoLine == '' || estadoLine == 1 || !estadoLine) {
+                        if (estadoLine == '' || estadoLine == 1 || !estadoLine || (statusOld==1 && statusNew==2)) {
                             linesTrans[line] = {item: itemLine, estado: estadoLine, contrato: contratoLine, unidad: unidadLine, cantidad: cantidadLine};
                             arrayAuxItems.push(itemLine);
                         }
@@ -259,9 +264,9 @@ define(['N/log', 'N/search', 'N/runtime'],
          * @since 2015.2
          */
         const afterSubmit = (scriptContext) => {
-
+            log.debug({ title:'aftersubmit event', details:scriptContext });
         }
 
-        return {beforeSubmit}
+        return {beforeLoad, beforeSubmit, afterSubmit}
 
     });
