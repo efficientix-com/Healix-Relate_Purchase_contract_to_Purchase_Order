@@ -86,7 +86,7 @@ define(['N/log', 'N/search', 'N/runtime', 'N/record'],
                             fieldId: 'custcol_fb_contract_related_by',
                             line: line
                         });
-                        log.debug({title:'validacion', details:estadoLine});
+                        log.debug({title:'validacion', details:{estadoLine: estadoLine, statusNew: statusNew, statusOld: statusOld}});
                         if (estadoLine == '' || estadoLine == 1 || !estadoLine || (statusOld==1 && statusNew==2)) {
                             linesTrans[line] = {item: itemLine, estado: estadoLine, contrato: contratoLine, unidad: unidadLine, cantidad: cantidadLine};
                             arrayAuxItems.push(itemLine);
@@ -168,16 +168,16 @@ define(['N/log', 'N/search', 'N/runtime', 'N/record'],
                             });
                             log.debug({title:'contractsResult', details:contractsResult});
                             log.debug({title:'linesTrans', details:linesTrans});
-                            log.debug({title:'linepending', details:linePending});
+                            log.debug({title:'linepending_beforeSubmit', details:linePending});
                             for (var lineSet = 0; lineSet < linePending.length; lineSet++) {
                                 var lineToSet = linePending[lineSet]; // linea pendiente a validar
                                 var itemToSet = linesTrans[lineToSet].item; // articulo en la linea pendiente
                                 var lineContract = arrayAuxItems.indexOf(itemToSet); // indice del contrato a utilizar
-                                // log.debug({title:'info', details:{linetoset: lineToSet, itemToSet: itemToSet, lineContract: lineContract}});
+                                log.debug({title:'info', details:{linetoset: lineToSet, itemToSet: itemToSet, lineContract: lineContract}});
                                 if (lineContract != -1) { // existe el contrato
                                     var contract = contractsResult[lineContract].contract;
                                     var rate = contractsResult[lineContract].item_rate;
-                                    // log.debug({title:'Data to use', details:{contract: contract, rate: rate}});
+                                    log.debug({title:'Data to use', details:{contract: contract, rate: rate}});
                                     newRecord.setSublistValue({
                                         sublistId: 'item',
                                         fieldId: 'custcol_fb_contract_related_by',
@@ -202,6 +202,7 @@ define(['N/log', 'N/search', 'N/runtime', 'N/record'],
                                         value: newRateItem
                                     });
                                 }else{ // no hay contratos para esta linea
+                                    log.debug({ title:'Data to use', details:'No hay contratos' });
                                     newRecord.setSublistValue({
                                         sublistId: 'item',
                                         fieldId: 'custcol_fb_contract_related_by',
@@ -215,6 +216,7 @@ define(['N/log', 'N/search', 'N/runtime', 'N/record'],
                                         value: ''
                                     });
                                 }
+                                log.debug({ title:'Fin del seteo', details:'Fin del seteo en linea: ' + lineToSet });
                             }
                         }else{
                             for (var line = 0; line < linePending.length; line++) {
@@ -397,16 +399,16 @@ define(['N/log', 'N/search', 'N/runtime', 'N/record'],
                                 });
                                 log.debug({title:'contractsResult', details:contractsResult});
                                 log.debug({title:'linesTrans', details:linesTrans});
-                                log.debug({title:'linepending', details:linePending});
+                                log.debug({title:'linepending_after', details:linePending});
                                 for (var lineSet = 0; lineSet < linePending.length; lineSet++) {
                                     var lineToSet = linePending[lineSet]; // linea pendiente a validar
                                     var itemToSet = linesTrans[lineToSet].item; // articulo en la linea pendiente
                                     var lineContract = arrayAuxItems.indexOf(itemToSet); // indice del contrato a utilizar
-                                    // log.debug({title:'info', details:{linetoset: lineToSet, itemToSet: itemToSet, lineContract: lineContract}});
+                                    log.debug({title:'info', details:{linetoset: lineToSet, itemToSet: itemToSet, lineContract: lineContract}});
                                     if (lineContract != -1) { // existe el contrato
                                         var contract = contractsResult[lineContract].contract;
                                         var rate = contractsResult[lineContract].item_rate;
-                                        // log.debug({title:'Data to use', details:{contract: contract, rate: rate}});
+                                        log.debug({title:'Data to use', details:{contract: contract, rate: rate}});
                                         newRecord.setSublistValue({
                                             sublistId: 'item',
                                             fieldId: 'custcol_fb_contract_related_by',
@@ -431,6 +433,7 @@ define(['N/log', 'N/search', 'N/runtime', 'N/record'],
                                             value: newRateItem
                                         });
                                     }else{ // no hay contratos para esta linea
+                                        log.debug({ title:'Data to use', details:'No hay contratos' });
                                         newRecord.setSublistValue({
                                             sublistId: 'item',
                                             fieldId: 'custcol_fb_contract_related_by',
@@ -486,6 +489,7 @@ define(['N/log', 'N/search', 'N/runtime', 'N/record'],
                         enableSourcing: true,
                         ignoreMandatoryFields: true
                     });
+                    log.debug({ title:'Transaction after', details:saveOrder });
                 }
             } catch (error) {
                 log.error({ title:'afterSubmit', details:error });
